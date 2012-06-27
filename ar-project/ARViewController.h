@@ -63,6 +63,4 @@
 - (void)initCamera;
 -(void)sharePictures;
 
-- (UIImage *) imageFromSampleBuffer:(CMSampleBufferRef) sampleBuffer ;
-
 @end
