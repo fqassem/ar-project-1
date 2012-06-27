@@ -32,19 +32,18 @@
 @synthesize captureSession = _captureSession;
 
 - (void)viewDidLoad
-{  
+{
     [super viewDidLoad];
     [self initLocationServices];
     [self initCamera];
     [self initRadar];
 }
 
-                                            
 - (void)initCamera {
     captureSession = [[AVCaptureSession alloc] init];
-	
+
 	AVCaptureDevice *videoDevice = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
-	if (videoDevice) { 
+	if (videoDevice) {
 		NSError *error;
 		AVCaptureDeviceInput *videoIn = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&error];
 		if (!error) {
@@ -59,21 +58,19 @@
 	} else {
 		NSLog(@"Couldn't create video capture device");
 	}
-	
+
 	[captureSession startRunning];
-    
+
     _stillImageOutput = [[AVCaptureStillImageOutput alloc] init];
     NSDictionary *outputSettings = [[NSDictionary alloc] initWithObjectsAndKeys: AVVideoCodecJPEG, AVVideoCodecKey, nil];
     [_stillImageOutput setOutputSettings:outputSettings];
-    
     [captureSession addOutput:_stillImageOutput];
 
-	
 	AVCaptureVideoPreviewLayer *previewLayer = [AVCaptureVideoPreviewLayer layerWithSession:captureSession];
 	previewLayer.frame = _cameraView.bounds;
     previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
 	[[_cameraView layer] addSublayer:previewLayer];
-    
+
     // Vertical Slider, rotates in the center
     _slider.transform = CGAffineTransformRotate(_slider.transform, 270.0/180*M_PI);
 }
@@ -99,8 +96,17 @@
         }
     }
     
+    CATransition *animation = [CATransition animation];
+    [animation setDelegate:self];
+    [animation setDuration:0.5];
+    //animation.timingFunction = UIViewAnimationCurveEaseInOut;
+    [animation setType:@"cameraIris"];
+    [_cameraView.superview.layer addAnimation:animation forKey:nil];
+    
+    
     NSLog(@"about to request a capture from: %@", _stillImageOutput);
     [_stillImageOutput captureStillImageAsynchronouslyFromConnection:videoConnection completionHandler: ^(CMSampleBufferRef imageSampleBuffer, NSError *error){
+        
         
         CFDictionaryRef exifAttachments = CMGetAttachment( imageSampleBuffer, kCGImagePropertyExifDictionary, NULL);
         if (exifAttachments){
@@ -114,15 +120,15 @@
         NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageSampleBuffer];
         UIImage *image = [[UIImage alloc] initWithData:imageData];
         
-        UIImage *overlay = imageView.image;
         
+        UIImage *overlay = _imageView.image;
         UIGraphicsBeginImageContext(image.size);
         
         // Use existing opacity as is
-        [image drawInRect:CGRectMake(0,0,image.size.width,image.size.height)];
+        [image drawInRect:CGRectMake(0,0,image.size.width/.8,image.size.height/.8)];
         
         // Apply supplied opacity if applicable
-        [image drawInRect:CGRectMake(0,0,overlay.size.width,overlay.size.height) blendMode:kCGBlendModeNormal alpha:0.8];
+        [overlay drawInRect:CGRectMake(_imageView.frame.origin.x, _imageView.frame.origin.y + overlay.size.height ,overlay.size.width/.6,overlay.size.height/.6) blendMode:kCGBlendModeNormal alpha:_slider.value];
         
         UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
         
@@ -198,6 +204,9 @@
 }
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation {
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
+    appDelegate.userLocation = newLocation;
+    
     location = newLocation;
     //Override Location to: 35.78528, -78.66330 (Pullen Rd.)
     location = [[CLLocation alloc] initWithLatitude:35.78528 longitude:-78.66330];
@@ -232,8 +241,16 @@
     float angle = 34.1;
     float zero = heading.trueHeading - angle / 2;
     if (zero < bearing && bearing < (zero + angle)) {
-        float x = round(((bearing - zero) * 768 / angle) -  768 / 2);
-        _imageView.frame = CGRectMake(x, _imageView.frame.origin.y, _imageView.frame.size.width, _imageView.frame.size.height);
+        float x = round(((bearing - zero) * 1368 / angle) -  1368 / 2);
+        _imageView.frame = CGRectMake(x - 300, _imageView.frame.origin.y, _imageView.frame.size.width, _imageView.frame.size.height);
+//        [UIView animateWithDuration:0.3f
+//                              delay:0.0f
+//                            options:UIViewAnimationOptionRepeat | UIViewAnimationOptionAutoreverse
+//                         animations:^{
+//                             _imageView.frame = CGRectMake(x - 300, _imageView.frame.origin.y, _imageView.frame.size.width, _imageView.frame.size.height);
+//                         }
+//                         completion:nil];
+
     } else {
         float x = 1024;
         _imageView.frame = CGRectMake(x, _imageView.frame.origin.y, _imageView.frame.size.width, _imageView.frame.size.height);
@@ -254,7 +271,7 @@
 
 #pragma Radar
 - (void)initRadar {
-    AppDelegate *appDelegate = [[UIApplication sharedApplication] delegate];
+    AppDelegate *appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
     
     pictures = [[NSMutableArray alloc] initWithCapacity:[[appDelegate.data allValues] count]];
     radarViews = [[NSMutableArray alloc] initWithCapacity:[[appDelegate.data allValues] count]];

@@ -14,8 +14,6 @@
 #import "Picture.h"
 #import "SlideMenu.h"
 
-
-
 @interface ARViewController : UIViewController <CLLocationManagerDelegate, UIAlertViewDelegate>
 {
     AVCaptureSession *captureSession;
@@ -27,16 +25,16 @@
     UISlider *slider;
     SlideMenu* slideMenu;
     UIAlertView* facebookShare;
-    
+
     CLLocationManager *locationManager;
     CLLocation *location;
     CLHeading *heading;
-    
+
     // Temporary
     UILabel *headingLabel;
     UILabel *coordinatesLabel;
     UIView *point0;
-    
+
 }
 
 
@@ -46,7 +44,6 @@
 @property (nonatomic, retain) IBOutlet UIImageView *imageView;
 @property (nonatomic, retain) IBOutlet UISlider *slider;
 @property (nonatomic, retain) IBOutlet SlideMenu *slideMenu;
-
 
 @property (nonatomic, retain) CLLocation *location;
 @property (nonatomic, retain) CLHeading *heading;
@@ -59,10 +56,6 @@
 @property (nonatomic, retain) IBOutlet UIView *point0;
 @property (nonatomic, retain) AVCaptureStillImageOutput *stillImageOutput;
 
-
-
-
-
 -(IBAction) sliderChanged:(id)sender;
 - (IBAction)captureView:(id)sender;
 -(void)showMessage; //shows facebook dialog
@@ -71,6 +64,5 @@
 -(void)sharePictures;
 
 - (UIImage *) imageFromSampleBuffer:(CMSampleBufferRef) sampleBuffer ;
-
 
 @end
